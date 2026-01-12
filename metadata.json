@@ -1,0 +1,5 @@
+{
+  "name": "GERNAS PIL",
+  "description": "An administrative dashboard for file processing and reporting with secure login and structured JSON payload handling.",
+  "requestFramePermissions": []
+}
