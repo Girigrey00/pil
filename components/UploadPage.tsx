@@ -2,15 +2,13 @@ import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText, Trash2, ArrowRight, Loader2, Plus, FileCheck, FolderOpen, Database, AlertCircle } from 'lucide-react';
 import { UploadRequestPayload, UploadResponsePayload } from '../types';
 import { uploadFileToAzure, processUpload } from '../services/api';
-import { useMsal } from "@azure/msal-react";
-import { apiConfig } from "../authConfig";
 
 interface UploadPageProps {
   onUploadSuccess: (response: UploadResponsePayload) => void;
 }
 
 const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
-  const { instance, accounts } = useMsal();
+  // Removed MSAL hooks since we are using admin/admin mock auth
   
   const [casId, setCasId] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -56,14 +54,9 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
   };
 
   const getAuthToken = async (): Promise<string> => {
-    const account = accounts[0];
-    if (!account) throw new Error("No active account");
-    
-    const response = await instance.acquireTokenSilent({
-      scopes: apiConfig.scopes,
-      account: account
-    });
-    return response.accessToken;
+    // Return a mock token for admin/admin mode
+    // In a real scenario without MSAL, this might come from a different auth provider or localStorage
+    return "mock-token-for-admin";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,7 +67,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
     setResponse(null);
 
     try {
-      // Get Access Token first
+      // Get Token
       const token = await getAuthToken();
 
       // Step 1: Upload files to Azure Blob Storage using Global SAS
@@ -85,7 +78,6 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
           setStatusMessage(`Uploading ${index + 1}/${selectedFiles.length}: ${file.name}...`);
           
           // Construct the relative path: CAS_ID/FILENAME (Ensures uniqueness per request)
-          // You can also use a date structure if required, e.g. `${casId}/input/${file.name}`
           const storagePath = `${casId}/${file.name}`;
           
           // Direct Upload to Azure

@@ -7,58 +7,56 @@ import { HistoryItem, UploadResponsePayload } from './types';
 import { fetchHistory } from './services/api';
 import { Bell } from 'lucide-react';
 
-// MSAL Imports
-import { useMsal, useIsAuthenticated } from "@azure/msal-react";
-import { InteractionStatus } from "@azure/msal-browser";
-import { apiConfig } from "./authConfig";
-
 const App: React.FC = () => {
-  const { instance, accounts, inProgress } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
+  // Simple state-based auth
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'upload'>('dashboard');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Get active user info
-  const activeAccount = accounts[0];
-  const userDisplayName = activeAccount?.name || 'Admin User';
-  const userEmail = activeAccount?.username || 'user@example.com';
-  const userInitials = activeAccount?.name 
-    ? activeAccount.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
-    : 'AD';
+  // Mock User Info
+  const userDisplayName = 'Admin User';
+  const userEmail = 'admin@gernas.com';
+  const userInitials = 'AD';
 
-  // Load history when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && activeAccount) {
+    // Check local storage for persistent login (optional for "as of now")
+    const storedAuth = localStorage.getItem('isAuth');
+    if (storedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
       loadHistory();
     }
-  }, [isAuthenticated, activeAccount]);
+  }, [isAuthenticated]);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('isAuth', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isAuth');
+    setHistory([]);
+  };
 
   const loadHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      const tokenResponse = await instance.acquireTokenSilent({
-        scopes: apiConfig.scopes,
-        account: activeAccount
-      });
-      
-      const data = await fetchHistory(tokenResponse.accessToken);
+      // Use a mock token since we are in admin/admin mode
+      const dummyToken = "mock-token"; 
+      const data = await fetchHistory(dummyToken);
       setHistory(data);
     } catch (error) {
       console.error("Failed to load history", error);
-      // If silent token acquisition fails, interaction might be required.
-      // In a production app, handle interaction required errors here.
     } finally {
       setIsLoadingHistory(false);
     }
-  };
-
-  const handleLogout = () => {
-    instance.logoutPopup({
-      postLogoutRedirectUri: window.location.origin,
-      mainWindowRedirectUri: window.location.origin
-    });
   };
 
   const handleUploadSuccess = (response: UploadResponsePayload) => {
@@ -70,18 +68,9 @@ const App: React.FC = () => {
     setHistory(prev => [newItem, ...prev]);
   };
 
-  // Show loading state while MSAL is processing
-  if (inProgress === InteractionStatus.Startup || inProgress === InteractionStatus.HandleRedirect) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
   // Show Login if not authenticated
   if (!isAuthenticated) {
-    return <Login />;
+    return <Login onLogin={handleLogin} />;
   }
 
   return (
