@@ -1,27 +1,28 @@
-export interface FilePayloadItem {
-  file_name: string;
-  content_type: string;
-  source: 'binary_upload';
-}
-
 export interface UploadRequestPayload {
   cas_id: string;
-  files: FilePayloadItem[];
+  document_path: string[];
 }
 
 export interface UploadResponsePayload {
-  status: string;
+  status: 'success' | 'failed';
   cas_id: string;
-  report_path: string;
-  download_url: string;
+  report_path?: string;
+  download_url?: string;
+  error_message?: string;
 }
 
-export interface HistoryItem extends UploadResponsePayload {
+export interface HistoryItem {
   id: string; // Internal ID for React keys
+  cas_id: string;
+  status: 'success' | 'failed';
+  report_path?: string;
+  download_url?: string;
+  error_message?: string;
   timestamp: string;
 }
 
 export interface User {
-  username: string;
-  role: 'admin';
+  name?: string;
+  username: string; // This maps to the 'email' or 'preferred_username' from Azure
+  role?: string; // Optional, can be derived from ID Token claims
 }

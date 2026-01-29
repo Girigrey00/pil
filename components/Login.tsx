@@ -1,23 +1,15 @@
-import React, { useState } from 'react';
-import { User } from '../types';
-import { Lock, User as UserIcon, ArrowRight, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import { useMsal } from "@azure/msal-react";
+import { loginRequest } from "../authConfig";
+import { ShieldCheck } from 'lucide-react';
 
-interface LoginProps {
-  onLogin: (user: User) => void;
-}
+const Login: React.FC = () => {
+  const { instance } = useMsal();
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
-      onLogin({ username: 'admin', role: 'admin' });
-    } else {
-      setError('Invalid credentials.');
-    }
+  const handleLogin = () => {
+    instance.loginPopup(loginRequest).catch(e => {
+        console.error(e);
+    });
   };
 
   return (
@@ -34,51 +26,25 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
            <p className="text-slate-500 mt-4 font-medium">Secure Access Gateway</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-8 border border-slate-100">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Username</label>
-              <div className="relative group">
-                <UserIcon className="w-5 h-5 text-slate-400 absolute left-4 top-3.5 group-focus-within:text-blue-600 transition-colors" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all outline-none font-medium text-slate-900 placeholder-slate-400"
-                  placeholder="ID / Username"
-                />
-              </div>
-            </div>
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-10 border border-slate-100 flex flex-col items-center gap-6">
+          <div className="text-center space-y-2">
+            <h2 className="text-xl font-bold text-slate-900">Welcome Back</h2>
+            <p className="text-slate-500 text-sm">Please sign in with your organization account to access the dashboard.</p>
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Password</label>
-              <div className="relative group">
-                <Lock className="w-5 h-5 text-slate-400 absolute left-4 top-3.5 group-focus-within:text-blue-600 transition-colors" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all outline-none font-medium text-slate-900 placeholder-slate-400"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className="p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium text-center border border-red-100 flex items-center justify-center gap-2">
-                <span className="w-1.5 h-1.5 bg-red-600 rounded-full"></span>
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98]"
-            >
-              <span>Sign In</span>
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </form>
+          <button
+            onClick={handleLogin}
+            className="w-full py-4 px-6 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98]"
+          >
+            {/* Microsoft Logo SVG */}
+            <svg className="w-5 h-5" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+                <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+                <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+                <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+            </svg>
+            <span>Sign in with Microsoft</span>
+          </button>
         </div>
         
         <p className="mt-8 text-center text-xs text-slate-400 font-medium">

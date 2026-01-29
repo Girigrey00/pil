@@ -1,17 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, FileText, X, Check, ArrowRight, Loader2, Plus, Trash2, FolderOpen, FileCheck } from 'lucide-react';
+import { UploadCloud, FileText, Trash2, ArrowRight, Loader2, Plus, FileCheck, FolderOpen, Database, AlertCircle } from 'lucide-react';
 import { UploadRequestPayload, UploadResponsePayload } from '../types';
-import { processUpload } from '../services/mockApi';
+import { uploadFileToAzure, processUpload } from '../services/api';
+import { useMsal } from "@azure/msal-react";
+import { apiConfig } from "../authConfig";
 
 interface UploadPageProps {
   onUploadSuccess: (response: UploadResponsePayload) => void;
 }
 
 const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
+  const { instance, accounts } = useMsal();
+  
   const [casId, setCasId] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'failed'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
   const [response, setResponse] = useState<UploadResponsePayload | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,6 +37,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
       const newFiles = Array.from(e.dataTransfer.files);
       setSelectedFiles(prev => [...prev, ...newFiles]);
       setResponse(null);
+      setStatus('idle');
     }
   };
 
@@ -40,6 +46,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
       const newFiles = Array.from(e.target.files);
       setSelectedFiles(prev => [...prev, ...newFiles]);
       setResponse(null);
+      setStatus('idle');
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -48,30 +55,69 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getAuthToken = async (): Promise<string> => {
+    const account = accounts[0];
+    if (!account) throw new Error("No active account");
+    
+    const response = await instance.acquireTokenSilent({
+      scopes: apiConfig.scopes,
+      account: account
+    });
+    return response.accessToken;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!casId || selectedFiles.length === 0) return;
 
-    setIsLoading(true);
+    setStatus('uploading');
     setResponse(null);
 
-    const payload: UploadRequestPayload = {
-      cas_id: casId,
-      files: selectedFiles.map(file => ({
-        file_name: file.name,
-        content_type: file.type || 'application/octet-stream',
-        source: 'binary_upload'
-      }))
-    };
-
     try {
-      const res = await processUpload(payload);
+      // Get Access Token first
+      const token = await getAuthToken();
+
+      // Step 1: Upload files to Azure Blob Storage using Global SAS
+      setStatusMessage('Initializing secure storage...');
+      
+      const documentPaths = await Promise.all(
+        selectedFiles.map(async (file, index) => {
+          setStatusMessage(`Uploading ${index + 1}/${selectedFiles.length}: ${file.name}...`);
+          
+          // Construct the relative path: CAS_ID/FILENAME (Ensures uniqueness per request)
+          // You can also use a date structure if required, e.g. `${casId}/input/${file.name}`
+          const storagePath = `${casId}/${file.name}`;
+          
+          // Direct Upload to Azure
+          await uploadFileToAzure(storagePath, file);
+
+          return storagePath;
+        })
+      );
+
+      // Step 2: Submit the job to backend
+      setStatus('processing');
+      setStatusMessage('Processing verified documents...');
+
+      const payload: UploadRequestPayload = {
+        cas_id: casId,
+        document_path: documentPaths
+      };
+
+      const res = await processUpload(token, payload);
+      
       setResponse(res);
-      onUploadSuccess(res);
+      
+      if (res.status === 'success') {
+        onUploadSuccess(res);
+        setStatus('success');
+      } else {
+        setStatus('failed');
+      }
     } catch (error) {
-      console.error("Upload failed", error);
-    } finally {
-      setIsLoading(false);
+      console.error("Upload process failed", error);
+      setStatusMessage(error instanceof Error ? error.message : "Unknown error occurred");
+      setStatus('failed');
     }
   };
 
@@ -79,13 +125,16 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
     setCasId('');
     setSelectedFiles([]);
     setResponse(null);
+    setStatus('idle');
   };
+
+  const isWorking = status === 'uploading' || status === 'processing';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       <header>
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">New Request</h1>
-        <p className="text-slate-500 mt-2 text-lg">Upload documents for bulk processing.</p>
+        <p className="text-slate-500 mt-2 text-lg">Secure upload to Azure Blob Storage.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -105,7 +154,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                   onChange={(e) => setCasId(e.target.value)}
                   placeholder="e.g. CAS-2023-8849"
                   className="w-full bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl px-4 py-4 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all outline-none text-lg font-medium"
-                  disabled={isLoading}
+                  disabled={isWorking}
                 />
               </div>
             </div>
@@ -120,11 +169,13 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => !isWorking && fileInputRef.current?.click()}
                 className={`relative group cursor-pointer border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center transition-all duration-300 ${
                   isDragging
                     ? 'border-blue-500 bg-blue-50/50'
-                    : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'
+                    : isWorking 
+                      ? 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60'
+                      : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'
                 }`}
               >
                 <input
@@ -133,6 +184,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                   className="hidden"
                   onChange={handleFileSelect}
                   multiple
+                  disabled={isWorking}
                 />
                 <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-sm">
                   <UploadCloud className="w-8 h-8" />
@@ -142,7 +194,6 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 <div className="mt-4 flex gap-2">
                    <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium">PDF</span>
                    <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium">DOCX</span>
-                   <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium">Images</span>
                 </div>
               </div>
 
@@ -151,11 +202,13 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 <div className="space-y-3 mt-6">
                   <div className="flex items-center justify-between">
                      <span className="text-sm font-medium text-slate-500">{selectedFiles.length} files selected</span>
-                     <button onClick={() => setSelectedFiles([])} className="text-xs font-semibold text-red-500 hover:text-red-700">Clear All</button>
+                     {!isWorking && (
+                       <button onClick={() => setSelectedFiles([])} className="text-xs font-semibold text-red-500 hover:text-red-700">Clear All</button>
+                     )}
                   </div>
                   <div className="grid gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                     {selectedFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm group hover:border-blue-300 transition-colors">
+                      <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
                         <div className="flex items-center gap-3 overflow-hidden">
                           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                             <FileText className="w-5 h-5" />
@@ -165,13 +218,14 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                             <p className="text-xs text-slate-500 font-mono">{(file.size / 1024).toFixed(1)} KB</p>
                           </div>
                         </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                          className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                          disabled={isLoading}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isWorking && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
+                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -182,21 +236,21 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
             <div className="pt-4">
               <button
                 onClick={handleSubmit}
-                disabled={!casId || selectedFiles.length === 0 || isLoading}
+                disabled={!casId || selectedFiles.length === 0 || isWorking}
                 className={`w-full py-4 px-6 rounded-xl flex items-center justify-center space-x-3 font-bold text-lg transition-all duration-300 transform active:scale-[0.98] ${
-                  !casId || selectedFiles.length === 0 || isLoading
+                  !casId || selectedFiles.length === 0 || isWorking
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/30'
                 }`}
               >
-                {isLoading ? (
+                {isWorking ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    <span>Processing Request...</span>
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
-                    <span>Submit Request</span>
+                    <span>Start Upload & Process</span>
                     <ArrowRight className="w-6 h-6" />
                   </>
                 )}
@@ -207,26 +261,77 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
 
         {/* Right Column: Status / Info */}
         <div className="lg:col-span-5 space-y-6">
-          {isLoading ? (
+          {isWorking ? (
              <div className="h-full min-h-[400px] bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
-                <div className="relative mb-6">
-                  <div className="w-20 h-20 border-4 border-slate-100 rounded-full"></div>
-                  <div className="w-20 h-20 border-4 border-blue-600 rounded-full border-t-transparent animate-spin absolute top-0 left-0"></div>
-                  <Loader2 className="w-8 h-8 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                <div className="relative mb-8">
+                   {/* Animated Upload Icon */}
+                   {status === 'uploading' ? (
+                      <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center relative">
+                        <div className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin"></div>
+                        <UploadCloud className="w-10 h-10 text-blue-600 animate-pulse" />
+                      </div>
+                   ) : (
+                      <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center relative">
+                         <div className="absolute inset-0 rounded-full border-4 border-amber-100 border-t-amber-500 animate-spin"></div>
+                         <Database className="w-10 h-10 text-amber-500 animate-pulse" />
+                      </div>
+                   )}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">Processing Documents</h3>
-                <p className="text-slate-500 text-center max-w-xs mt-2">
-                  Verifying CAS ID and generating reports. This may take a few moments.
+                
+                <h3 className="text-xl font-bold text-slate-900">
+                  {status === 'uploading' ? 'Uploading to Storage' : 'Analyzing Documents'}
+                </h3>
+                <p className="text-slate-500 text-center max-w-xs mt-3 font-medium">
+                  {statusMessage}
                 </p>
+
+                {/* Simulated Progress Steps */}
+                <div className="mt-8 w-full max-w-xs space-y-3">
+                   <div className="flex items-center gap-3 text-sm">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${status === 'uploading' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'}`}>
+                        {status === 'uploading' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                      </div>
+                      <span className={status === 'uploading' ? 'text-blue-900 font-medium' : 'text-slate-500'}>Secure Cloud Upload</span>
+                   </div>
+                   <div className="w-0.5 h-4 bg-slate-200 ml-3"></div>
+                   <div className="flex items-center gap-3 text-sm">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${status === 'processing' ? 'bg-amber-500 text-white' : status === 'uploading' ? 'bg-slate-200' : 'bg-slate-200'}`}>
+                         {status === 'processing' ? <Loader2 className="w-3 h-3 animate-spin" /> : <span className="text-[10px] text-slate-500">2</span>}
+                      </div>
+                      <span className={status === 'processing' ? 'text-amber-900 font-medium' : 'text-slate-400'}>Data Extraction</span>
+                   </div>
+                </div>
              </div>
-          ) : response ? (
+          ) : status === 'failed' ? (
+             <div className="bg-white rounded-3xl shadow-lg border border-red-100 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
+               <div className="bg-red-50/50 p-8 flex flex-col items-center justify-center text-center border-b border-red-100">
+                  <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-red-50">
+                     <AlertCircle className="w-10 h-10 text-red-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-slate-900">Processing Failed</h2>
+                  <p className="text-red-700 mt-2 font-medium bg-red-100 px-4 py-1 rounded-full text-sm">
+                    {response?.error_message || statusMessage || "An unexpected error occurred"}
+                  </p>
+               </div>
+               
+               <div className="p-8">
+                 <button
+                   onClick={resetForm}
+                   className="w-full py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
+                 >
+                   <Plus className="w-5 h-5" />
+                   <span>Try Again</span>
+                 </button>
+               </div>
+             </div>
+          ) : response && response.status === 'success' ? (
             <div className="bg-white rounded-3xl shadow-lg border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
               <div className="bg-emerald-50/50 p-8 flex flex-col items-center justify-center text-center border-b border-emerald-100">
                  <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-emerald-50">
                     <FileCheck className="w-10 h-10 text-emerald-600" />
                  </div>
                  <h2 className="text-2xl font-bold text-slate-900">Success</h2>
-                 <p className="text-emerald-700 mt-2 font-medium bg-emerald-100 px-4 py-1 rounded-full text-sm">Verification Complete</p>
+                 <p className="text-emerald-700 mt-2 font-medium bg-emerald-100 px-4 py-1 rounded-full text-sm">Report Generated</p>
               </div>
 
               <div className="p-8 space-y-6">
@@ -242,19 +347,20 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                              <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <FileText className="w-5 h-5 text-blue-600" />
                              </div>
-                             <span className="text-sm font-semibold text-slate-700 truncate flex-1">{response.report_path}</span>
+                             <span className="text-sm font-semibold text-slate-700 truncate flex-1">{response.report_path || 'Report Available'}</span>
                         </div>
                     </div>
                 </div>
 
-                <a
-                  href={response.download_url}
-                  onClick={e => e.preventDefault()}
-                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-center shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 flex items-center justify-center gap-3 active:scale-[0.98]"
-                >
-                    <FolderOpen className="w-5 h-5" />
-                    <span>Download Report</span>
-                </a>
+                {response.download_url && (
+                  <a
+                    href={response.download_url}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-center shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 flex items-center justify-center gap-3 active:scale-[0.98]"
+                  >
+                      <FolderOpen className="w-5 h-5" />
+                      <span>Download Report</span>
+                  </a>
+                )}
 
                 <button
                   onClick={resetForm}
@@ -283,7 +389,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                    <div className="space-y-3">
                        <h3 className="text-2xl font-bold text-slate-900">Ready to Process</h3>
                        <p className="text-slate-500 leading-relaxed text-base">
-                         Fill out the form and upload your documents to begin the secure verification process.
+                         Files will be securely uploaded to Azure Storage before processing.
                        </p>
                    </div>
                    
@@ -300,5 +406,21 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
     </div>
   );
 };
+
+// Helper for check icon in step indicator
+const Check = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="3" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
 
 export default UploadPage;
