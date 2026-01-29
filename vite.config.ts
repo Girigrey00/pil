@@ -10,6 +10,13 @@ export default defineConfig({
         target: 'https://pil.gernas.bankfab.com',
         changeOrigin: true,
         secure: false, // Set to false if the backend has a self-signed certificate or issues with SSL
+      },
+      // Proxy for Azure Blob Storage to bypass CORS during development
+      '/azure-blob': {
+        target: 'https://auranpunawlsa.blob.core.windows.net',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/azure-blob/, ''),
       }
     }
   }

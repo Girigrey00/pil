@@ -6,14 +6,22 @@ const getHeaders = (token: string) => ({
   'Content-Type': 'application/json',
 });
 
-// Hardcoded Azure Blob Storage Configuration
-const AZURE_CONTAINER_URL = "https://auranpunawlsa.blob.core.windows.net/pil-beta-latest";
+// Azure Configuration
+const AZURE_ACCOUNT_BASE = "https://auranpunawlsa.blob.core.windows.net";
+const CONTAINER_NAME = "pil-beta-latest";
 const AZURE_SAS_TOKEN = "?sp=racw&st=2026-01-21T11:37:39Z&se=2026-12-31T19:52:39Z&spr=https&sv=2024-11-04&sr=c&sig=tiAAggE%2BeriqVfvn0RlypXL3JsKP6wy%2B%2BR9WoZjj0d0%3D";
+
+// Determine if we are running in development mode (provided by Vite)
+const IS_DEV = import.meta.env.DEV;
+
+// Use the proxy path '/azure-blob' in dev, or the full URL in production
+const BASE_STORAGE_URL = IS_DEV ? '/azure-blob' : AZURE_ACCOUNT_BASE;
 
 // 1. Direct PUT to Azure Blob Storage using the provided SAS Token
 export const uploadFileToAzure = async (relativePath: string, file: File): Promise<void> => {
-  // Construct the full URL: Container + Path + SAS Token
-  const fullUploadUrl = `${AZURE_CONTAINER_URL}/${relativePath}${AZURE_SAS_TOKEN}`;
+  // Construct the full URL: Base (Proxy/Real) + Container + Path + SAS Token
+  // Example Dev: /azure-blob/pil-beta-latest/cas-id/file.pdf?sas...
+  const fullUploadUrl = `${BASE_STORAGE_URL}/${CONTAINER_NAME}/${relativePath}${AZURE_SAS_TOKEN}`;
 
   const response = await fetch(fullUploadUrl, {
     method: 'PUT',
