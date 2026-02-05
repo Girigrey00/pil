@@ -5,15 +5,13 @@ import Dashboard from './components/Dashboard';
 import UploadPage from './components/UploadPage';
 import { HistoryResponse, UploadResponsePayload } from './types';
 import { fetchHistory } from './services/api';
-import { Bell } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
 
 const App: React.FC = () => {
-  // Simple state-based auth
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
   const [activeTab, setActiveTab] = useState<'dashboard' | 'upload'>('dashboard');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  // State for history data matching the new API response structure
   const [historyData, setHistoryData] = useState<HistoryResponse>({
     status: '',
     Total_Count: 0,
@@ -23,13 +21,10 @@ const App: React.FC = () => {
   
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Mock User Info
   const userDisplayName = 'Admin User';
-  const userEmail = 'admin@gernas.com';
   const userInitials = 'AD';
 
   useEffect(() => {
-    // Check local storage for persistent login (optional for "as of now")
     const storedAuth = localStorage.getItem('isAuth');
     if (storedAuth === 'true') {
       setIsAuthenticated(true);
@@ -38,20 +33,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
-
     if (isAuthenticated) {
-      // Initial load with spinner
       loadHistory();
-
-      // Poll every 3 seconds silently (no spinner) to update status
       intervalId = setInterval(() => {
         loadHistory(true);
       }, 3000);
     }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, [isAuthenticated]);
 
   const handleLogin = () => {
@@ -68,7 +56,6 @@ const App: React.FC = () => {
   const loadHistory = async (silent = false) => {
     if (!silent) setIsLoadingHistory(true);
     try {
-      // Use a mock token since we are in admin/admin mode
       const dummyToken = "mock-token"; 
       const data = await fetchHistory(dummyToken);
       setHistoryData(data);
@@ -80,66 +67,73 @@ const App: React.FC = () => {
   };
 
   const handleUploadSuccess = (response: UploadResponsePayload) => {
-    // Refresh history immediately
     loadHistory(true);
-    // Optional: switch to dashboard to see result
-    // setActiveTab('dashboard'); 
   };
 
-  // Show Login if not authenticated
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;
   }
 
   return (
-    <div className="flex h-screen bg-[#F5F7FA] text-slate-900 font-sans overflow-hidden">
+    <div className="flex h-screen bg-surface font-sans text-slate-900 overflow-hidden">
+      {/* Sidebar - behaves as a flex item now */}
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        onLogout={handleLogout} 
+        onLogout={handleLogout}
+        isCollapsed={isSidebarCollapsed}
+        toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      <main className="flex-1 ml-72 flex flex-col h-screen overflow-hidden relative">
-        {/* Top Header */}
-        <header className="h-20 px-8 flex items-center justify-between shrink-0 bg-white border-b border-slate-200 sticky top-0 z-10">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
-             <span className="font-bold text-brand tracking-tight">GERNAS</span>
-             <span className="text-slate-300">/</span>
-             <span className="text-brand capitalize">{activeTab}</span>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Floating Header Look */}
+        <header className="h-20 px-8 flex items-center justify-between shrink-0 bg-surface z-10">
+          <div className="flex items-center gap-4">
+             <h2 className="text-2xl font-bold text-slate-800 capitalize tracking-tight">
+               {activeTab === 'dashboard' ? 'Overview' : 'Upload Files'}
+             </h2>
           </div>
           
-          <div className="flex items-center gap-6">
-            <button className="relative p-2 text-slate-400 hover:text-brand hover:bg-slate-100 rounded-full transition-all">
+          <div className="flex items-center gap-4">
+            {/* Search Bar Pill */}
+            <div className="hidden md:flex items-center bg-white px-4 py-2.5 rounded-full shadow-sm border border-transparent hover:shadow-md transition-shadow w-64 lg:w-96">
+               <Search className="w-5 h-5 text-slate-400" />
+               <input 
+                 type="text" 
+                 placeholder="Search reference..." 
+                 className="bg-transparent border-none outline-none text-sm ml-3 w-full text-slate-700 placeholder:text-slate-400"
+               />
+            </div>
+
+            <button className="p-3 bg-white rounded-full shadow-sm hover:shadow-md text-slate-600 hover:text-brand transition-all relative">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
             
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
-              <div className="text-right hidden sm:block leading-tight">
-                <p className="text-sm font-bold text-brand">{userDisplayName}</p>
-                <p className="text-xs text-slate-500 font-medium truncate max-w-[150px]">{userEmail}</p>
-              </div>
-              <button className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center shadow-sm font-bold transition-colors">
+            <button className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center shadow-md font-bold text-sm hover:scale-105 transition-transform">
                 {userInitials}
-              </button>
-            </div>
+            </button>
           </div>
         </header>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto p-8 pt-6">
-          {activeTab === 'dashboard' && (
-            isLoadingHistory ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <Dashboard data={historyData} />
-            )
-          )}
-          {activeTab === 'upload' && <UploadPage onUploadSuccess={handleUploadSuccess} />}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pt-2">
+          <div className="max-w-[1600px] mx-auto w-full">
+            {activeTab === 'dashboard' && (
+              isLoadingHistory ? (
+                <div className="flex flex-col items-center justify-center h-[60vh]">
+                  <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
+                  <p className="mt-4 text-slate-500 font-medium">Loading data...</p>
+                </div>
+              ) : (
+                <Dashboard data={historyData} />
+              )
+            )}
+            {activeTab === 'upload' && <UploadPage onUploadSuccess={handleUploadSuccess} />}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

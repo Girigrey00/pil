@@ -7,7 +7,12 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-surface text-slate-800 antialiased;
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input, div {
+  @apply transition-all duration-200 ease-in-out;
 }
 
 /* Custom Scrollbar for file lists */
