@@ -20,14 +20,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-[#003da5] font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-brand font-sans">
       <div className="w-full max-w-md p-6">
         <div className="mb-10 text-center flex flex-col items-center">
-           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#003da5] text-white mb-6 shadow-xl shadow-[#003da5]/20">
+           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-brand text-white mb-6 shadow-xl shadow-brand/20">
              <ShieldCheck className="w-8 h-8" />
            </div>
            <div className="flex flex-col items-center">
-             <h1 className="text-4xl font-black tracking-tight text-[#003da5] leading-none">GERNAS</h1>
+             <h1 className="text-4xl font-black tracking-tight text-brand leading-none">GERNAS</h1>
              <span className="text-sm font-bold text-slate-400 tracking-[0.3em] mt-1.5">PIL</span>
            </div>
            <p className="text-slate-500 mt-4 font-medium">Secure Access Gateway</p>
@@ -35,7 +35,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="bg-white rounded-xl shadow-xl shadow-slate-200/50 p-10 border border-slate-200 flex flex-col gap-6">
           <div className="text-center space-y-2">
-            <h2 className="text-xl font-bold text-[#003da5]">Welcome Back</h2>
+            <h2 className="text-xl font-bold text-brand">Welcome Back</h2>
             <p className="text-slate-500 text-sm">Please sign in to access the dashboard.</p>
           </div>
 
@@ -50,7 +50,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="text"
                   value={username}
                   onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#003da5] focus:border-transparent sm:text-sm transition-all text-[#003da5]"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand focus:border-transparent sm:text-sm transition-all text-brand"
                   placeholder="Enter username"
                 />
               </div>
@@ -66,7 +66,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#003da5] focus:border-transparent sm:text-sm transition-all text-[#003da5]"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand focus:border-transparent sm:text-sm transition-all text-brand"
                   placeholder="Enter password"
                 />
               </div>
@@ -78,7 +78,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <button
               type="submit"
-              className="w-full py-3.5 px-6 bg-[#003da5] hover:bg-[#002a72] text-white font-bold rounded-lg shadow-lg shadow-[#003da5]/20 transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] mt-2"
+              className="w-full py-3.5 px-6 bg-brand hover:bg-brand-dark text-white font-bold rounded-lg shadow-lg shadow-brand/20 transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] mt-2"
             >
               <span>Sign In</span>
               <ArrowRight className="w-5 h-5" />

@@ -14,10 +14,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout }) 
   ] as const;
 
   return (
-    <aside className="w-72 bg-[#003da5] flex flex-col h-screen fixed left-0 top-0 shadow-xl z-20 transition-all duration-300 text-white">
+    <aside className="w-72 bg-brand flex flex-col h-screen fixed left-0 top-0 shadow-xl z-20 transition-all duration-300 text-white">
       <div className="p-8 flex items-center gap-3 border-b border-white/10">
         <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-md shrink-0">
-          <FileText className="w-6 h-6 text-[#003da5]" strokeWidth={2.5} />
+          <FileText className="w-6 h-6 text-brand" strokeWidth={2.5} />
         </div>
         <div className="flex flex-col">
           <span className="text-xl font-black text-white tracking-tight leading-none">GERNAS</span>
@@ -35,14 +35,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout }) 
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-200 font-medium ${
                 isActive
-                  ? 'bg-white text-[#003da5] shadow-md'
+                  ? 'bg-white text-brand shadow-md'
                   : 'text-slate-300 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <Icon className={`w-6 h-6 ${isActive ? 'text-[#003da5]' : 'text-slate-400 group-hover:text-white'}`} />
+              <Icon className={`w-6 h-6 ${isActive ? 'text-brand' : 'text-slate-400 group-hover:text-white'}`} />
               <span className="flex-1 text-left">{item.label}</span>
               {item.id === 'dashboard' && (
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap uppercase tracking-wide ${isActive ? 'bg-[#003da5] text-white' : 'bg-white/20 text-white'}`}>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap uppercase tracking-wide ${isActive ? 'bg-brand text-white' : 'bg-white/20 text-white'}`}>
                   Beta
                 </span>
               )}
