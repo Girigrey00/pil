@@ -1,6 +1,6 @@
 import React from 'react';
 import { HistoryResponse } from '../types';
-import { Download, CheckCircle, Clock, Search, FileBarChart, XCircle, FileText } from 'lucide-react';
+import { Download, CheckCircle, Search, FileBarChart, XCircle, Clock } from 'lucide-react';
 
 interface DashboardProps {
   data: HistoryResponse;
@@ -10,7 +10,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
   const history = data.data || [];
   const totalCount = data.Total_Count || 0;
   const rejectedCount = data.Rejected || 0;
-  // Assuming "Completed" is Total - Rejected, or can be calculated from successful items
+  // Calculate success count based on Total - Rejected
   const successCount = totalCount - rejectedCount;
 
   return (
@@ -64,18 +64,20 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">CAS ID</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Summary</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Files (Acc/Tot)</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Download</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">User ID</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">CAS ID</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Summary</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Files</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Latency</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-8 py-16 text-center">
+                  <td colSpan={8} className="px-8 py-16 text-center">
                     <div className="flex flex-col items-center justify-center text-slate-400">
                       <FileBarChart className="w-12 h-12 mb-3 opacity-20" />
                       <p className="text-lg font-medium text-slate-900">No records found</p>
@@ -86,7 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
               ) : (
                 history.map((item) => (
                   <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
-                    <td className="px-8 py-5 align-middle">
+                    <td className="px-6 py-5 align-middle">
                       {item.status === 'complete' ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                           <CheckCircle className="w-3.5 h-3.5" />
@@ -99,21 +101,30 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                         </span>
                       )}
                     </td>
-                    <td className="px-8 py-5 align-middle">
+                    <td className="px-6 py-5 align-middle">
+                      <span className="text-sm text-slate-600 font-medium">{item.user_id}</span>
+                    </td>
+                    <td className="px-6 py-5 align-middle">
                       <span className="font-semibold text-slate-700">{item.cas_id}</span>
                     </td>
-                    <td className="px-8 py-5 align-middle">
-                      <div className="max-w-xs" title={item.summary}>
+                    <td className="px-6 py-5 align-middle">
+                      <div className="max-w-[200px]" title={item.summary}>
                         <p className="text-xs text-slate-600 truncate">{item.summary || 'No summary available'}</p>
                       </div>
                     </td>
-                    <td className="px-8 py-5 align-middle">
-                      <div className="flex items-center gap-2">
+                    <td className="px-6 py-5 align-middle">
+                      <div className="flex items-center gap-1">
                         <span className="text-sm font-bold text-slate-700">{item.accepted_files}</span>
                         <span className="text-xs text-slate-400">/ {item.total_files}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-5 align-middle">
+                    <td className="px-6 py-5 align-middle">
+                      <div className="flex items-center gap-1.5 text-slate-500">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="text-sm font-mono">{item.latency_ms}ms</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 align-middle">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-900">
                           {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -123,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-8 py-5 align-middle text-right">
+                    <td className="px-6 py-5 align-middle text-right">
                       {item.download_url && item.download_url !== "N.A" ? (
                         <a 
                           href={item.download_url}

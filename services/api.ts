@@ -54,13 +54,14 @@ export const processUpload = async (token: string, payload: UploadRequestPayload
 
 // 3. Get Dashboard History
 export const fetchHistory = async (token: string): Promise<HistoryResponse> => {
+  console.log("Fetching history from:", `${apiConfig.baseUrl}/agent-user-history`);
   const response = await fetch(`${apiConfig.baseUrl}/agent-user-history`, {
     method: 'GET',
     headers: getHeaders(token)
   });
 
   if (!response.ok) {
-    console.warn("History endpoint error:", response.statusText);
+    console.error("History endpoint error:", response.status, response.statusText);
     // Return empty default structure on error
     return {
       status: "error",
@@ -70,5 +71,7 @@ export const fetchHistory = async (token: string): Promise<HistoryResponse> => {
     };
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("History data received:", data);
+  return data;
 };
