@@ -57,12 +57,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, is
               <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ml-4 ${isCollapsed ? 'w-0 opacity-0' : 'flex-1 opacity-100 text-left'}`}>
                 {item.label}
               </span>
-
-              {item.id === 'dashboard' && !isCollapsed && (
-                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 ${isActive ? 'bg-brand text-white' : 'bg-slate-100 text-slate-500'}`}>
-                   BETA
-                 </span>
-              )}
             </button>
           );
         })}

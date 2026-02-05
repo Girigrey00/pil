@@ -5,7 +5,6 @@ import Dashboard from './components/Dashboard';
 import UploadPage from './components/UploadPage';
 import { HistoryResponse, UploadResponsePayload } from './types';
 import { fetchHistory } from './services/api';
-import { Bell, Search } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -96,21 +95,6 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Search Bar Pill */}
-            <div className="hidden md:flex items-center bg-white px-4 py-2.5 rounded-full shadow-sm border border-transparent hover:shadow-md transition-shadow w-64 lg:w-96">
-               <Search className="w-5 h-5 text-slate-400" />
-               <input 
-                 type="text" 
-                 placeholder="Search reference..." 
-                 className="bg-transparent border-none outline-none text-sm ml-3 w-full text-slate-700 placeholder:text-slate-400"
-               />
-            </div>
-
-            <button className="p-3 bg-white rounded-full shadow-sm hover:shadow-md text-slate-600 hover:text-brand transition-all relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
-            
             <button className="w-10 h-10 bg-brand text-white rounded-full flex items-center justify-center shadow-md font-bold text-sm hover:scale-105 transition-transform">
                 {userInitials}
             </button>
