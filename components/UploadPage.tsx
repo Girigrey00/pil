@@ -8,8 +8,6 @@ interface UploadPageProps {
 }
 
 const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
-  // Removed MSAL hooks since we are using admin/admin mock auth
-  
   const [casId, setCasId] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -54,8 +52,6 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
   };
 
   const getAuthToken = async (): Promise<string> => {
-    // Return a mock token for admin/admin mode
-    // In a real scenario without MSAL, this might come from a different auth provider or localStorage
     return "mock-token-for-admin";
   };
 
@@ -67,27 +63,18 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
     setResponse(null);
 
     try {
-      // Get Token
       const token = await getAuthToken();
-
-      // Step 1: Upload files to Azure Blob Storage using Global SAS
       setStatusMessage('Initializing secure storage...');
       
       const documentPaths = await Promise.all(
         selectedFiles.map(async (file, index) => {
           setStatusMessage(`Uploading ${index + 1}/${selectedFiles.length}: ${file.name}...`);
-          
-          // Construct the relative path: CAS_ID/FILENAME (Ensures uniqueness per request)
           const storagePath = `${casId}/${file.name}`;
-          
-          // Direct Upload to Azure
           await uploadFileToAzure(storagePath, file);
-
           return storagePath;
         })
       );
 
-      // Step 2: Submit the job to backend
       setStatus('processing');
       setStatusMessage('Processing verified documents...');
 
@@ -97,7 +84,6 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
       };
 
       const res = await processUpload(token, payload);
-      
       setResponse(res);
       
       if (res.status === 'success') {
@@ -125,17 +111,17 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
       <header>
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">New Request</h1>
+        <h1 className="text-3xl font-bold text-[#0A2540] tracking-tight">New Request</h1>
         <p className="text-slate-500 mt-2 text-lg">Secure upload to Azure Blob Storage.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Form */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 space-y-8">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-8">
             {/* Input Group */}
             <div className="space-y-3">
-              <label htmlFor="casId" className="block text-sm font-bold text-slate-700 uppercase tracking-wider">
+              <label htmlFor="casId" className="block text-sm font-bold text-[#0A2540] uppercase tracking-wider">
                 Reference ID (CAS ID)
               </label>
               <div className="relative">
@@ -145,7 +131,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                   value={casId}
                   onChange={(e) => setCasId(e.target.value)}
                   placeholder="e.g. CAS-2023-8849"
-                  className="w-full bg-slate-50 border-0 ring-1 ring-slate-200 rounded-xl px-4 py-4 text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all outline-none text-lg font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-4 text-[#0A2540] placeholder-slate-400 focus:ring-2 focus:ring-[#0A2540] focus:bg-white transition-all outline-none text-lg font-medium"
                   disabled={isWorking}
                 />
               </div>
@@ -153,7 +139,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
 
             {/* Upload Area */}
             <div className="space-y-3">
-              <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider">
+              <label className="block text-sm font-bold text-[#0A2540] uppercase tracking-wider">
                 Attachments
               </label>
               
@@ -162,12 +148,12 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => !isWorking && fileInputRef.current?.click()}
-                className={`relative group cursor-pointer border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center transition-all duration-300 ${
+                className={`relative group cursor-pointer border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center transition-all duration-300 ${
                   isDragging
-                    ? 'border-blue-500 bg-blue-50/50'
+                    ? 'border-[#0A2540] bg-blue-50/50'
                     : isWorking 
                       ? 'border-slate-200 bg-slate-50 cursor-not-allowed opacity-60'
-                      : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'
+                      : 'border-slate-300 hover:border-[#0A2540] hover:bg-slate-50'
                 }`}
               >
                 <input
@@ -178,14 +164,14 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                   multiple
                   disabled={isWorking}
                 />
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                <div className="w-16 h-16 bg-slate-100 text-[#0A2540] rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-sm">
                   <UploadCloud className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900">Drop files here</h3>
+                <h3 className="text-lg font-semibold text-[#0A2540]">Drop files here</h3>
                 <p className="text-slate-500 mt-1">or click to browse from computer</p>
                 <div className="mt-4 flex gap-2">
-                   <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium">PDF</span>
-                   <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium">DOCX</span>
+                   <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium border border-slate-200">PDF</span>
+                   <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium border border-slate-200">DOCX</span>
                 </div>
               </div>
 
@@ -195,25 +181,25 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                   <div className="flex items-center justify-between">
                      <span className="text-sm font-medium text-slate-500">{selectedFiles.length} files selected</span>
                      {!isWorking && (
-                       <button onClick={() => setSelectedFiles([])} className="text-xs font-semibold text-red-500 hover:text-red-700">Clear All</button>
+                       <button onClick={() => setSelectedFiles([])} className="text-xs font-semibold text-red-600 hover:text-red-800">Clear All</button>
                      )}
                   </div>
                   <div className="grid gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                     {selectedFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                      <div key={idx} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm">
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 bg-[#0A2540] text-white rounded-lg flex items-center justify-center flex-shrink-0">
                             <FileText className="w-5 h-5" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 truncate">{file.name}</p>
+                            <p className="text-sm font-semibold text-[#0A2540] truncate">{file.name}</p>
                             <p className="text-xs text-slate-500 font-mono">{(file.size / 1024).toFixed(1)} KB</p>
                           </div>
                         </div>
                         {!isWorking && (
                           <button
                             onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
-                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                            className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -229,10 +215,10 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
               <button
                 onClick={handleSubmit}
                 disabled={!casId || selectedFiles.length === 0 || isWorking}
-                className={`w-full py-4 px-6 rounded-xl flex items-center justify-center space-x-3 font-bold text-lg transition-all duration-300 transform active:scale-[0.98] ${
+                className={`w-full py-4 px-6 rounded-lg flex items-center justify-center space-x-3 font-bold text-lg transition-all duration-300 transform active:scale-[0.98] ${
                   !casId || selectedFiles.length === 0 || isWorking
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/30'
+                    : 'bg-[#0A2540] hover:bg-[#163a61] text-white shadow-lg shadow-[#0A2540]/20'
                 }`}
               >
                 {isWorking ? (
@@ -254,13 +240,13 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
         {/* Right Column: Status / Info */}
         <div className="lg:col-span-5 space-y-6">
           {isWorking ? (
-             <div className="h-full min-h-[400px] bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+             <div className="h-full min-h-[400px] bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
                 <div className="relative mb-8">
                    {/* Animated Upload Icon */}
                    {status === 'uploading' ? (
                       <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center relative">
-                        <div className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin"></div>
-                        <UploadCloud className="w-10 h-10 text-blue-600 animate-pulse" />
+                        <div className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-[#0A2540] animate-spin"></div>
+                        <UploadCloud className="w-10 h-10 text-[#0A2540] animate-pulse" />
                       </div>
                    ) : (
                       <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center relative">
@@ -270,7 +256,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                    )}
                 </div>
                 
-                <h3 className="text-xl font-bold text-slate-900">
+                <h3 className="text-xl font-bold text-[#0A2540]">
                   {status === 'uploading' ? 'Uploading to Storage' : 'Analyzing Documents'}
                 </h3>
                 <p className="text-slate-500 text-center max-w-xs mt-3 font-medium">
@@ -280,10 +266,10 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 {/* Simulated Progress Steps */}
                 <div className="mt-8 w-full max-w-xs space-y-3">
                    <div className="flex items-center gap-3 text-sm">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${status === 'uploading' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-white'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${status === 'uploading' ? 'bg-[#0A2540] text-white' : 'bg-green-600 text-white'}`}>
                         {status === 'uploading' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                       </div>
-                      <span className={status === 'uploading' ? 'text-blue-900 font-medium' : 'text-slate-500'}>Secure Cloud Upload</span>
+                      <span className={status === 'uploading' ? 'text-[#0A2540] font-medium' : 'text-slate-500'}>Secure Cloud Upload</span>
                    </div>
                    <div className="w-0.5 h-4 bg-slate-200 ml-3"></div>
                    <div className="flex items-center gap-3 text-sm">
@@ -295,12 +281,12 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 </div>
              </div>
           ) : status === 'failed' ? (
-             <div className="bg-white rounded-3xl shadow-lg border border-red-100 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
+             <div className="bg-white rounded-xl shadow-lg border border-red-100 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
                <div className="bg-red-50/50 p-8 flex flex-col items-center justify-center text-center border-b border-red-100">
                   <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-red-50">
                      <AlertCircle className="w-10 h-10 text-red-600" />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900">Processing Failed</h2>
+                  <h2 className="text-2xl font-bold text-[#0A2540]">Processing Failed</h2>
                   <p className="text-red-700 mt-2 font-medium bg-red-100 px-4 py-1 rounded-full text-sm">
                     {response?.error_message || statusMessage || "An unexpected error occurred"}
                   </p>
@@ -309,7 +295,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                <div className="p-8">
                  <button
                    onClick={resetForm}
-                   className="w-full py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
+                   className="w-full py-4 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-[#0A2540] transition-all flex items-center justify-center gap-2"
                  >
                    <Plus className="w-5 h-5" />
                    <span>Try Again</span>
@@ -317,27 +303,27 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                </div>
              </div>
           ) : response && response.status === 'success' ? (
-            <div className="bg-white rounded-3xl shadow-lg border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
-              <div className="bg-emerald-50/50 p-8 flex flex-col items-center justify-center text-center border-b border-emerald-100">
-                 <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-emerald-50">
-                    <FileCheck className="w-10 h-10 text-emerald-600" />
+            <div className="bg-white rounded-xl shadow-lg border border-green-100 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-500">
+              <div className="bg-green-50/50 p-8 flex flex-col items-center justify-center text-center border-b border-green-100">
+                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 shadow-sm ring-8 ring-green-50">
+                    <FileCheck className="w-10 h-10 text-green-600" />
                  </div>
-                 <h2 className="text-2xl font-bold text-slate-900">Success</h2>
-                 <p className="text-emerald-700 mt-2 font-medium bg-emerald-100 px-4 py-1 rounded-full text-sm">Report Generated</p>
+                 <h2 className="text-2xl font-bold text-[#0A2540]">Success</h2>
+                 <p className="text-green-700 mt-2 font-medium bg-green-100 px-4 py-1 rounded-full text-sm">Report Generated</p>
               </div>
 
               <div className="p-8 space-y-6">
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-5">
+                <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 space-y-5">
                     <div>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Reference ID</span>
-                        <p className="text-xl font-bold text-slate-900 font-mono mt-1 tracking-tight">{response.cas_id}</p>
+                        <p className="text-xl font-bold text-[#0A2540] font-mono mt-1 tracking-tight">{response.cas_id}</p>
                     </div>
                     <div className="h-px bg-slate-200 w-full"></div>
                     <div>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Generated Output</span>
-                        <div className="flex items-center gap-3 mt-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-5 h-5 text-blue-600" />
+                        <div className="flex items-center gap-3 mt-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                             <div className="w-10 h-10 bg-[#0A2540] rounded-lg flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-white" />
                              </div>
                              <span className="text-sm font-semibold text-slate-700 truncate flex-1">{response.report_path || 'Report Available'}</span>
                         </div>
@@ -347,7 +333,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
                 {response.download_url && (
                   <a
                     href={response.download_url}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-center shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/30 flex items-center justify-center gap-3 active:scale-[0.98]"
+                    className="w-full py-4 bg-[#0A2540] hover:bg-[#163a61] text-white font-bold rounded-lg text-center shadow-lg shadow-[#0A2540]/20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
                   >
                       <FolderOpen className="w-5 h-5" />
                       <span>Download Report</span>
@@ -356,7 +342,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
 
                 <button
                   onClick={resetForm}
-                  className="w-full py-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:text-[#0A2540] transition-all flex items-center justify-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
                   <span>Process New Request</span>
@@ -364,31 +350,23 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
               </div>
             </div>
           ) : (
-            <div className="h-full min-h-[500px] bg-gradient-to-b from-white to-slate-50 rounded-3xl border border-slate-200 border-dashed flex flex-col items-center justify-center text-center p-10 relative overflow-hidden group transition-all">
+            <div className="h-full min-h-[500px] bg-gradient-to-b from-white to-slate-50 rounded-xl border border-slate-200 border-dashed flex flex-col items-center justify-center text-center p-10 relative overflow-hidden group transition-all">
                {/* Decorative background elements */}
-               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100 rounded-full blur-3xl -mr-20 -mt-20 opacity-40"></div>
-               <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-100 rounded-full blur-3xl -ml-20 -mb-20 opacity-40"></div>
+               <div className="absolute top-0 right-0 w-48 h-48 bg-blue-100 rounded-full blur-3xl -mr-20 -mt-20 opacity-20"></div>
+               <div className="absolute bottom-0 left-0 w-48 h-48 bg-slate-200 rounded-full blur-3xl -ml-20 -mb-20 opacity-30"></div>
 
                <div className="relative z-10 space-y-8 max-w-sm">
                    <div className="relative mx-auto">
-                       <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-lg shadow-slate-200/50 mx-auto relative z-10 transform rotate-3 group-hover:rotate-6 transition-transform duration-500">
-                         <UploadCloud className="w-10 h-10 text-slate-300 group-hover:text-blue-600 transition-colors duration-500" />
+                       <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200/50 mx-auto relative z-10 transform rotate-3 group-hover:rotate-6 transition-transform duration-500">
+                         <UploadCloud className="w-10 h-10 text-slate-300 group-hover:text-[#0A2540] transition-colors duration-500" />
                        </div>
-                       {/* Pulsing ring */}
-                       <div className="absolute top-0 left-0 right-0 bottom-0 bg-blue-400 rounded-3xl animate-ping opacity-10 duration-1000"></div>
                    </div>
 
                    <div className="space-y-3">
-                       <h3 className="text-2xl font-bold text-slate-900">Ready to Process</h3>
+                       <h3 className="text-2xl font-bold text-[#0A2540]">Ready to Process</h3>
                        <p className="text-slate-500 leading-relaxed text-base">
                          Files will be securely uploaded to Azure Storage before processing.
                        </p>
-                   </div>
-                   
-                   <div className="pt-4 flex justify-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                      <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
                    </div>
                </div>
             </div>

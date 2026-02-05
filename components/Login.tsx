@@ -20,22 +20,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-[#0A2540] font-sans">
       <div className="w-full max-w-md p-6">
         <div className="mb-10 text-center flex flex-col items-center">
-           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 text-white mb-6 shadow-xl shadow-blue-200">
+           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#0A2540] text-white mb-6 shadow-xl shadow-[#0A2540]/20">
              <ShieldCheck className="w-8 h-8" />
            </div>
            <div className="flex flex-col items-center">
-             <h1 className="text-4xl font-black tracking-tight text-slate-900 leading-none">GERNAS</h1>
-             <span className="text-sm font-bold text-blue-600 tracking-[0.3em] mt-1.5">PIL</span>
+             <h1 className="text-4xl font-black tracking-tight text-[#0A2540] leading-none">GERNAS</h1>
+             <span className="text-sm font-bold text-slate-400 tracking-[0.3em] mt-1.5">PIL</span>
            </div>
            <p className="text-slate-500 mt-4 font-medium">Secure Access Gateway</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 p-10 border border-slate-100 flex flex-col gap-6">
+        <div className="bg-white rounded-xl shadow-xl shadow-slate-200/50 p-10 border border-slate-200 flex flex-col gap-6">
           <div className="text-center space-y-2">
-            <h2 className="text-xl font-bold text-slate-900">Welcome Back</h2>
+            <h2 className="text-xl font-bold text-[#0A2540]">Welcome Back</h2>
             <p className="text-slate-500 text-sm">Please sign in to access the dashboard.</p>
           </div>
 
@@ -50,7 +50,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="text"
                   value={username}
                   onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2540] focus:border-transparent sm:text-sm transition-all text-[#0A2540]"
                   placeholder="Enter username"
                 />
               </div>
@@ -66,7 +66,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   type="password"
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2540] focus:border-transparent sm:text-sm transition-all text-[#0A2540]"
                   placeholder="Enter password"
                 />
               </div>
@@ -78,7 +78,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <button
               type="submit"
-              className="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] mt-2"
+              className="w-full py-3.5 px-6 bg-[#0A2540] hover:bg-[#163a61] text-white font-bold rounded-lg shadow-lg shadow-[#0A2540]/20 transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] mt-2"
             >
               <span>Sign In</span>
               <ArrowRight className="w-5 h-5" />
