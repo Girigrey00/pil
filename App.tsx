@@ -37,9 +37,21 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
     if (isAuthenticated) {
+      // Initial load with spinner
       loadHistory();
+
+      // Poll every 3 seconds silently (no spinner) to update status
+      intervalId = setInterval(() => {
+        loadHistory(true);
+      }, 3000);
     }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [isAuthenticated]);
 
   const handleLogin = () => {
@@ -53,8 +65,8 @@ const App: React.FC = () => {
     setHistoryData({ status: '', Total_Count: 0, Rejected: 0, data: [] });
   };
 
-  const loadHistory = async () => {
-    setIsLoadingHistory(true);
+  const loadHistory = async (silent = false) => {
+    if (!silent) setIsLoadingHistory(true);
     try {
       // Use a mock token since we are in admin/admin mode
       const dummyToken = "mock-token"; 
@@ -63,13 +75,13 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Failed to load history", error);
     } finally {
-      setIsLoadingHistory(false);
+      if (!silent) setIsLoadingHistory(false);
     }
   };
 
   const handleUploadSuccess = (response: UploadResponsePayload) => {
-    // Refresh history to get the server-generated summary and stats
-    loadHistory();
+    // Refresh history immediately
+    loadHistory(true);
     // Optional: switch to dashboard to see result
     // setActiveTab('dashboard'); 
   };
