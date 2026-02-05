@@ -61,28 +61,40 @@ export const fetchHistory = async (): Promise<HistoryItem[]> => {
   // Return some dummy historical data
   return [
     {
-      id: '1',
+      id: 1,
+      user_id: 'admin_user',
       cas_id: 'CAS-2024-001',
-      status: 'success',
-      report_path: 'CAS-2024-001_report.csv',
-      download_url: '#',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() // 2 hours ago
+      status: 'complete',
+      summary: 'Report generated successfully',
+      total_files: 10,
+      accepted_files: 10,
+      latency_ms: 1200,
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+      download_url: '#'
     },
     {
-      id: '2',
+      id: 2,
+      user_id: 'admin_user',
       cas_id: 'CAS-2024-002',
-      status: 'success',
-      report_path: 'CAS-2024-002_report.csv',
-      download_url: '#',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() // 1 day ago
+      status: 'complete',
+      summary: 'Report generated successfully',
+      total_files: 5,
+      accepted_files: 5,
+      latency_ms: 850,
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+      download_url: '#'
     },
     {
-      id: '3',
+      id: 3,
+      user_id: 'admin_user',
       cas_id: 'CAS-2024-003',
-      status: 'success',
-      report_path: 'CAS-2024-003_report.csv',
-      download_url: '#',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString() // 2 days ago
+      status: 'complete',
+      summary: 'Report generated successfully',
+      total_files: 8,
+      accepted_files: 8,
+      latency_ms: 920,
+      created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+      download_url: '#'
     }
   ];
 };

@@ -1,4 +1,4 @@
-import { UploadRequestPayload, UploadResponsePayload, HistoryItem } from '../types';
+import { UploadRequestPayload, UploadResponsePayload, HistoryResponse } from '../types';
 import { apiConfig } from '../authConfig';
 
 const getHeaders = (token: string) => ({
@@ -53,18 +53,21 @@ export const processUpload = async (token: string, payload: UploadRequestPayload
 };
 
 // 3. Get Dashboard History
-export const fetchHistory = async (token: string): Promise<HistoryItem[]> => {
-  // Assuming the history endpoint follows the same base URL pattern
-  const response = await fetch(`${apiConfig.baseUrl}/requests-history`, {
+export const fetchHistory = async (token: string): Promise<HistoryResponse> => {
+  const response = await fetch(`${apiConfig.baseUrl}/agent-user-history`, {
     method: 'GET',
     headers: getHeaders(token)
   });
 
   if (!response.ok) {
-    // Fallback/Graceful handling if history endpoint isn't ready
-    console.warn("History endpoint might not be available yet:", response.statusText);
-    return []; 
-    // throw new Error(`Failed to fetch history: ${response.statusText}`);
+    console.warn("History endpoint error:", response.statusText);
+    // Return empty default structure on error
+    return {
+      status: "error",
+      Total_Count: 0,
+      Rejected: 0,
+      data: []
+    };
   }
 
   return response.json();

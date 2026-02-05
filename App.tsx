@@ -3,7 +3,7 @@ import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import UploadPage from './components/UploadPage';
-import { HistoryItem, UploadResponsePayload } from './types';
+import { HistoryResponse, UploadResponsePayload } from './types';
 import { fetchHistory } from './services/api';
 import { Bell } from 'lucide-react';
 
@@ -12,7 +12,15 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'upload'>('dashboard');
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  
+  // State for history data matching the new API response structure
+  const [historyData, setHistoryData] = useState<HistoryResponse>({
+    status: '',
+    Total_Count: 0,
+    Rejected: 0,
+    data: []
+  });
+  
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   // Mock User Info
@@ -42,7 +50,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuth');
-    setHistory([]);
+    setHistoryData({ status: '', Total_Count: 0, Rejected: 0, data: [] });
   };
 
   const loadHistory = async () => {
@@ -51,7 +59,7 @@ const App: React.FC = () => {
       // Use a mock token since we are in admin/admin mode
       const dummyToken = "mock-token"; 
       const data = await fetchHistory(dummyToken);
-      setHistory(data);
+      setHistoryData(data);
     } catch (error) {
       console.error("Failed to load history", error);
     } finally {
@@ -60,12 +68,10 @@ const App: React.FC = () => {
   };
 
   const handleUploadSuccess = (response: UploadResponsePayload) => {
-    const newItem: HistoryItem = {
-      ...response,
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString()
-    };
-    setHistory(prev => [newItem, ...prev]);
+    // Refresh history to get the server-generated summary and stats
+    loadHistory();
+    // Optional: switch to dashboard to see result
+    // setActiveTab('dashboard'); 
   };
 
   // Show Login if not authenticated
@@ -116,7 +122,7 @@ const App: React.FC = () => {
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
             ) : (
-              <Dashboard history={history} />
+              <Dashboard data={historyData} />
             )
           )}
           {activeTab === 'upload' && <UploadPage onUploadSuccess={handleUploadSuccess} />}

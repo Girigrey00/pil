@@ -1,12 +1,18 @@
 import React from 'react';
-import { HistoryItem } from '../types';
-import { Download, CheckCircle, Clock, Search, FileBarChart } from 'lucide-react';
+import { HistoryResponse } from '../types';
+import { Download, CheckCircle, Clock, Search, FileBarChart, XCircle, FileText } from 'lucide-react';
 
 interface DashboardProps {
-  history: HistoryItem[];
+  data: HistoryResponse;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ history }) => {
+const Dashboard: React.FC<DashboardProps> = ({ data }) => {
+  const history = data.data || [];
+  const totalCount = data.Total_Count || 0;
+  const rejectedCount = data.Rejected || 0;
+  // Assuming "Completed" is Total - Rejected, or can be calculated from successful items
+  const successCount = totalCount - rejectedCount;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -31,9 +37,9 @@ const Dashboard: React.FC<DashboardProps> = ({ history }) => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: 'Total Requests', value: history.length, icon: FileBarChart, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Completed', value: history.filter(h => h.status === 'success').length, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-          { label: 'Processing', value: 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Total Requests', value: totalCount, icon: FileBarChart, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Successful', value: successCount, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Rejected/Failed', value: rejectedCount, icon: XCircle, color: 'text-red-600', bg: 'bg-red-50' },
         ].map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow">
             <div>
@@ -59,16 +65,17 @@ const Dashboard: React.FC<DashboardProps> = ({ history }) => {
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Reference (CAS ID)</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Output Report</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Date & Time</th>
-                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">CAS ID</th>
+                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Summary</th>
+                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Files (Acc/Tot)</th>
+                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                <th className="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Download</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {history.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-8 py-16 text-center">
+                  <td colSpan={6} className="px-8 py-16 text-center">
                     <div className="flex flex-col items-center justify-center text-slate-400">
                       <FileBarChart className="w-12 h-12 mb-3 opacity-20" />
                       <p className="text-lg font-medium text-slate-900">No records found</p>
@@ -80,36 +87,58 @@ const Dashboard: React.FC<DashboardProps> = ({ history }) => {
                 history.map((item) => (
                   <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors">
                     <td className="px-8 py-5 align-middle">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        SUCCESS
-                      </span>
+                      {item.status === 'complete' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          SUCCESS
+                        </span>
+                      ) : (
+                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                          <XCircle className="w-3.5 h-3.5" />
+                          FAILED
+                        </span>
+                      )}
                     </td>
                     <td className="px-8 py-5 align-middle">
                       <span className="font-semibold text-slate-700">{item.cas_id}</span>
                     </td>
                     <td className="px-8 py-5 align-middle">
-                      <code className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-600">{item.report_path}</code>
+                      <div className="max-w-xs" title={item.summary}>
+                        <p className="text-xs text-slate-600 truncate">{item.summary || 'No summary available'}</p>
+                      </div>
+                    </td>
+                    <td className="px-8 py-5 align-middle">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-700">{item.accepted_files}</span>
+                        <span className="text-xs text-slate-400">/ {item.total_files}</span>
+                      </div>
                     </td>
                     <td className="px-8 py-5 align-middle">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-900">
-                          {new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                         <span className="text-xs text-slate-400">
-                          {new Date(item.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(item.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </td>
                     <td className="px-8 py-5 align-middle text-right">
-                      <a 
-                        href={item.download_url}
-                        className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-600 hover:text-blue-600 transition-all shadow-sm hover:shadow-md"
-                        title="Download Report"
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <Download className="w-5 h-5" />
-                      </a>
+                      {item.download_url && item.download_url !== "N.A" ? (
+                        <a 
+                          href={item.download_url}
+                          className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-600 hover:border-blue-600 hover:text-blue-600 transition-all shadow-sm hover:shadow-md"
+                          title="Download Report"
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          <Download className="w-5 h-5" />
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 text-slate-300 cursor-not-allowed">
+                          <Download className="w-5 h-5" />
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))

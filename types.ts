@@ -12,17 +12,27 @@ export interface UploadResponsePayload {
 }
 
 export interface HistoryItem {
-  id: string; // Internal ID for React keys
+  id: number;
+  user_id: string;
   cas_id: string;
-  status: 'success' | 'failed';
-  report_path?: string;
-  download_url?: string;
-  error_message?: string;
-  timestamp: string;
+  status: 'complete' | 'fail';
+  summary: string;
+  total_files: number;
+  accepted_files: number;
+  latency_ms: number;
+  created_at: string;
+  download_url: string;
+}
+
+export interface HistoryResponse {
+  status: string;
+  Total_Count: number;
+  Rejected: number;
+  data: HistoryItem[];
 }
 
 export interface User {
   name?: string;
-  username: string; // This maps to the 'email' or 'preferred_username' from Azure
-  role?: string; // Optional, can be derived from ID Token claims
+  username: string;
+  role?: string;
 }
