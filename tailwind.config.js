@@ -11,9 +11,9 @@ export default {
       },
       colors: {
         brand: {
-          DEFAULT: '#003da5', // rgb(0, 61, 165)
-          dark: '#002a72',
-          light: '#e6ecf6',
+          DEFAULT: '#03045e', // Updated to new Navy Blue
+          dark: '#020344',    // Darker shade for hover states
+          light: '#e6e7f5',   // Light variant for backgrounds
         }
       }
     },
