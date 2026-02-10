@@ -1,6 +1,7 @@
 export interface UploadRequestPayload {
   cas_id: string;
   document_path: string[];
+  username: string;
 }
 
 export interface UploadResponsePayload {

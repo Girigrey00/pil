@@ -31,15 +31,20 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-    if (isAuthenticated) {
-      loadHistory();
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    
+    // Only fetch if authenticated AND on dashboard
+    if (isAuthenticated && activeTab === 'dashboard') {
+      loadHistory(true); // Immediate fetch when switching to dashboard
       intervalId = setInterval(() => {
         loadHistory(true);
-      }, 3000);
+      }, 5000); // Fetch every 5 seconds
     }
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated]);
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isAuthenticated, activeTab]);
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -57,7 +62,10 @@ const App: React.FC = () => {
     try {
       const dummyToken = "mock-token"; 
       const data = await fetchHistory(dummyToken);
-      setHistoryData(data);
+      // Ensure we set default structure if API fails returning non-json
+      if (data) {
+          setHistoryData(data);
+      }
     } catch (error) {
       console.error("Failed to load history", error);
     } finally {
@@ -66,7 +74,7 @@ const App: React.FC = () => {
   };
 
   const handleUploadSuccess = (response: UploadResponsePayload) => {
-    loadHistory(true);
+    // History refresh is handled by the polling effect when switching tabs
   };
 
   if (!isAuthenticated) {
@@ -75,7 +83,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-surface font-sans text-slate-900 overflow-hidden">
-      {/* Sidebar - behaves as a flex item now */}
+      {/* Sidebar */}
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
@@ -105,7 +113,7 @@ const App: React.FC = () => {
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pt-2">
           <div className="max-w-[1600px] mx-auto w-full">
             {activeTab === 'dashboard' && (
-              isLoadingHistory ? (
+              isLoadingHistory && historyData.data.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-[60vh]">
                   <div className="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
                   <p className="mt-4 text-slate-500 font-medium">Loading data...</p>

@@ -16,23 +16,34 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
   const [response, setResponse] = useState<UploadResponsePayload | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ... (Keep existing handlers: handleDragOver, handleDrop, etc.) ...
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
+  
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault(); setIsDragging(false);
-    if (e.dataTransfer.files?.length > 0) {
-      setSelectedFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]);
-      setResponse(null); setStatus('idle');
+    e.preventDefault(); 
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      setSelectedFiles(prev => [...prev, ...droppedFiles]);
+      setResponse(null); 
+      setStatus('idle');
     }
   };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) {
-      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-      setResponse(null); setStatus('idle');
+    // Create a copy of files to avoid synthetic event issues
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+      setResponse(null); 
+      setStatus('idle');
     }
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    // Always clear the input value to allow selecting the same file again
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
+
   const removeFile = (index: number) => setSelectedFiles(prev => prev.filter((_, i) => i !== index));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,7 +62,13 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
       }));
       setStatus('processing');
       setStatusMessage('Processing verified documents...');
-      const payload: UploadRequestPayload = { cas_id: casId, document_path: documentPaths };
+      
+      const payload: UploadRequestPayload = { 
+          cas_id: casId, 
+          document_path: documentPaths,
+          username: "admin"
+      };
+      
       const res = await processUpload(token, payload);
       setResponse(res);
       if (res.status === 'success') {
