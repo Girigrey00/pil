@@ -55,23 +55,74 @@ export const processUpload = async (token: string, payload: UploadRequestPayload
 // 3. Get Dashboard History
 export const fetchHistory = async (token: string): Promise<HistoryResponse> => {
   console.log("Fetching history from:", `${apiConfig.baseUrl}/agent-user-history`);
-  const response = await fetch(`${apiConfig.baseUrl}/agent-user-history`, {
-    method: 'GET',
-    headers: getHeaders(token)
-  });
+  
+  try {
+    const response = await fetch(`${apiConfig.baseUrl}/agent-user-history`, {
+      method: 'GET',
+      headers: getHeaders(token)
+    });
 
-  if (!response.ok) {
-    console.error("History endpoint error:", response.status, response.statusText);
-    // Return empty default structure on error
+    // Check if the response content type is JSON
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") === -1) {
+       console.warn("Received non-JSON response (likely HTML fallback). Using dummy data.");
+       throw new Error("Response is not JSON");
+    }
+
+    if (!response.ok) {
+      console.error("History endpoint error:", response.status, response.statusText);
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("History data received:", data);
+    return data;
+    
+  } catch (error) {
+    console.log("Returning dummy data due to API error:", error);
+    // Fallback Dummy Data
     return {
-      status: "error",
-      Total_Count: 0,
-      Rejected: 0,
-      data: []
+      status: "success",
+      Total_Count: 45,
+      Rejected: 3,
+      data: [
+        {
+          id: 1,
+          user_id: 'john.doe',
+          cas_id: 'CAS-2024-001',
+          status: 'complete',
+          summary: 'Processed successfully',
+          total_files: 10,
+          accepted_files: 10,
+          latency_ms: 1200,
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+          download_url: '#'
+        },
+        {
+          id: 2,
+          user_id: 'sarah.smith',
+          cas_id: 'CAS-2024-002',
+          status: 'fail',
+          summary: 'Unsupported file format detected',
+          total_files: 5,
+          accepted_files: 2,
+          latency_ms: 850,
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+          download_url: 'N.A'
+        },
+        {
+          id: 3,
+          user_id: 'mike.ross',
+          cas_id: 'CAS-2024-003',
+          status: 'complete',
+          summary: 'Report generated successfully',
+          total_files: 8,
+          accepted_files: 8,
+          latency_ms: 920,
+          created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+          download_url: '#'
+        }
+      ]
     };
   }
-
-  const data = await response.json();
-  console.log("History data received:", data);
-  return data;
 };

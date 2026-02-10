@@ -1,6 +1,6 @@
 export interface UploadRequestPayload {
   cas_id: string;
-  name: string;
+  // name field removed
   document_path: string[];
   username: string;
 }

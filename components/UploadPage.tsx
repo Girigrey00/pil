@@ -66,9 +66,9 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
       
       const payload: UploadRequestPayload = { 
           cas_id: casId, 
-          name: name,
-          document_path: documentPaths,
-          username: "admin"
+          // Map the input 'name' to the 'username' field as requested
+          username: name,
+          document_path: documentPaths
       };
       
       const res = await processUpload(token, payload);
@@ -106,7 +106,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
           </h3>
           
           <div className="space-y-8 flex-1">
-            {/* Name Input */}
+            {/* Name Input mapped to username */}
             <div className="relative group">
                <input
                 id="name"
