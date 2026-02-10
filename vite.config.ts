@@ -14,7 +14,7 @@ export default defineConfig({
       },
       // Proxy for Azure Blob Storage to bypass CORS during development
       '/azure-blob': {
-        target: 'https://auranpunawlsa.blob.core.windows.net',
+        target: 'https://auranpunawlsa02.blob.core.windows.net',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/azure-blob/, ''),

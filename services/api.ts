@@ -7,9 +7,9 @@ const getHeaders = (token: string) => ({
 });
 
 // Azure Configuration
-const AZURE_ACCOUNT_BASE = "https://auranpunawlsa.blob.core.windows.net";
+const AZURE_ACCOUNT_BASE = "https://auranpunawlsa02.blob.core.windows.net";
 const CONTAINER_NAME = "pil-beta-latest";
-const AZURE_SAS_TOKEN = "?sp=racw&st=2026-01-21T11:37:39Z&se=2026-12-31T19:52:39Z&spr=https&sv=2024-11-04&sr=c&sig=tiAAggE%2BeriqVfvn0RlypXL3JsKP6wy%2B%2BR9WoZjj0d0%3D";
+const AZURE_SAS_TOKEN = "?sp=racwl&st=2026-01-30T10:30:02Z&se=2026-06-30T18:45:02Z&spr=https&sv=2024-11-04&sr=c&sig=7vD6aEM9BhK88eX%2BJlPnEqQQvrCqeyqb4jfmeK%2B3i98%3D";
 
 // Determine if we are running in development mode (provided by Vite)
 const IS_DEV = (import.meta as any).env.DEV;
