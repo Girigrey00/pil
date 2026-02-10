@@ -12,7 +12,7 @@ const CONTAINER_NAME = "pil-beta-latest";
 const AZURE_SAS_TOKEN = "?sp=racw&st=2026-01-21T11:37:39Z&se=2026-12-31T19:52:39Z&spr=https&sv=2024-11-04&sr=c&sig=tiAAggE%2BeriqVfvn0RlypXL3JsKP6wy%2B%2BR9WoZjj0d0%3D";
 
 // Determine if we are running in development mode (provided by Vite)
-const IS_DEV = import.meta.env.DEV;
+const IS_DEV = (import.meta as any).env.DEV;
 
 // Use the proxy path '/azure-blob' in dev, or the full URL in production
 const BASE_STORAGE_URL = IS_DEV ? '/azure-blob' : AZURE_ACCOUNT_BASE;

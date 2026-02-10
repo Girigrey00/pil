@@ -8,6 +8,7 @@ interface UploadPageProps {
 }
 
 const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
+  const [name, setName] = useState('');
   const [casId, setCasId] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -48,7 +49,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!casId || selectedFiles.length === 0) return;
+    if (!casId || !name || selectedFiles.length === 0) return;
     setStatus('uploading');
     setResponse(null);
     try {
@@ -65,6 +66,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
       
       const payload: UploadRequestPayload = { 
           cas_id: casId, 
+          name: name,
           document_path: documentPaths,
           username: "admin"
       };
@@ -85,6 +87,7 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
 
   const resetForm = () => {
     setCasId('');
+    setName('');
     setSelectedFiles([]);
     setResponse(null);
     setStatus('idle');
@@ -103,7 +106,26 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
           </h3>
           
           <div className="space-y-8 flex-1">
-            {/* Input with Material 3 Style */}
+            {/* Name Input */}
+            <div className="relative group">
+               <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder=" "
+                className="peer w-full h-14 px-4 pt-4 rounded-t-lg border-b-2 border-slate-300 bg-slate-50 text-slate-900 focus:border-brand focus:bg-brand-light/20 outline-none transition-all placeholder-transparent"
+                disabled={isWorking}
+              />
+              <label 
+                htmlFor="name"
+                className="absolute left-4 top-4 text-slate-500 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-brand peer-[:not(:placeholder-shown)]:-top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-slate-500"
+              >
+                Name
+              </label>
+            </div>
+
+            {/* CAS ID Input */}
             <div className="relative group">
                <input
                 id="casId"
@@ -169,9 +191,9 @@ const UploadPage: React.FC<UploadPageProps> = ({ onUploadSuccess }) => {
           <div className="pt-6 mt-6 border-t border-slate-100">
             <button
               onClick={handleSubmit}
-              disabled={!casId || selectedFiles.length === 0 || isWorking}
+              disabled={!casId || !name || selectedFiles.length === 0 || isWorking}
               className={`w-full py-4 rounded-full font-bold text-lg flex items-center justify-center gap-3 shadow-lg transition-all active:scale-[0.98] ${
-                !casId || selectedFiles.length === 0 || isWorking
+                !casId || !name || selectedFiles.length === 0 || isWorking
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                   : 'bg-brand text-white hover:bg-brand-hover shadow-brand/30'
               }`}
