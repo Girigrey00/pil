@@ -54,9 +54,10 @@ export const processUpload = async (token: string, payload: UploadRequestPayload
 
 // 3. Get Dashboard History
 export const fetchHistory = async (token: string): Promise<HistoryResponse> => {
-  // Use direct URL as requested
-  const historyUrl = "https://pil.gernas.bankfab.com/api/agent-user-history";
-  console.log("Fetching history from:", historyUrl);
+  // Use the proxy path defined in authConfig (usually "/api") to avoid CORS errors.
+  // The vite.config.ts proxy will forward this to https://pil.gernas.bankfab.com/api/agent-user-history
+  const historyUrl = `${apiConfig.baseUrl}/agent-user-history`;
+  console.log("Fetching history from (proxied):", historyUrl);
   
   try {
     const response = await fetch(historyUrl, {
